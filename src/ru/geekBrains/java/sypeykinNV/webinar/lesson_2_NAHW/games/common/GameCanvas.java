@@ -1,7 +1,5 @@
 package ru.geekBrains.java.sypeykinNV.webinar.lesson_2_NAHW.games.common;
 
-import ru.geekBrains.java.sypeykinNV.webinar.lesson_2_NAHW.games.circles.MainCircles;
-
 import javax.swing.*;
 import java.awt.*;
 

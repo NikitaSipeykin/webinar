@@ -62,7 +62,7 @@ public class MainBricks extends JFrame implements GameCanvasListener {
     }
 
     private void removeGameObject(){
-        if (gameObjectsCount > 1) gameObjectsCount--;
+        if (gameObjectsCount > 0) gameObjectsCount--;
     }
 
     private void  initApplication(){

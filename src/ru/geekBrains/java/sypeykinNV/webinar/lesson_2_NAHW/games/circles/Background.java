@@ -2,7 +2,7 @@ package ru.geekBrains.java.sypeykinNV.webinar.lesson_2_NAHW.games.circles;
 
 import ru.geekBrains.java.sypeykinNV.webinar.lesson_2_NAHW.games.common.GameCanvas;
 import ru.geekBrains.java.sypeykinNV.webinar.lesson_2_NAHW.games.common.GameObject;
-import ru.geekBrains.java.sypeykinNV.webinar.lesson_2_NAHW.games.common.Sprite;
+
 
 import java.awt.*;
 
