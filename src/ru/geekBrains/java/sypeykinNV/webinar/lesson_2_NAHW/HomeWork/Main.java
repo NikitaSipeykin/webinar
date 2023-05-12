@@ -27,8 +27,9 @@ public class Main {
     private static final String STR_02 = "10 3 1 2\n2 3 2 2\n5 6 7 1\n300 3 1 0\nten three one two";
     private static final String STR_03 = "10 3 1 2\n2 3 2 2\n5 6 7 1\nten three one two";
     private static final String STR_04 = "10 3 1 2\n2 3 2 2\n5 6 7 1\n!) # ! @";
+    private static final String STR_05 = "10 3 1 2\n2 3 2 2\n5 6 7 1\n300 3 1 0 7";
 
-    private static final String[] AllStrings = {STR_00, STR_01, STR_02, STR_03, STR_04};
+    private static final String[] AllStrings = {STR_00, STR_01, STR_02, STR_03, STR_04, STR_05};
 
     public static void main(String[] args) {
         for (int i = 0; i < AllStrings.length; i++) {
@@ -37,10 +38,10 @@ public class Main {
                 ArrayDrawer.arrayDrawer(stringToArrayConverter(AllStrings[i]));
                 System.out.println();
                 ArrayDrawer.arrayDrawer(stringArrToIntArr(stringToArrayConverter(AllStrings[i])));
-                System.out.println("\nResult of mathematics operations by " + (i + 1) + " array is " +
+                System.out.println("\nResult of mathematics operations by " + i  + " array is " +
                         sumAndDivide(stringArrToIntArr(stringToArrayConverter(AllStrings[i]))) + "\n");
             }catch (Exception e){
-                System.err.println("Found Exception in array STR_0" + (i +1));
+                System.err.println("Found Exception in array STR_0" + i);
                 e.printStackTrace();
             }
         }
