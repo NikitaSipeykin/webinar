@@ -1,13 +1,10 @@
 package ru.geekBrains.java.sypeykinNV.webinar.lesson_3_NAHW.HomeWork;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class HomeWork {
     /*
-1.  Создать массив с набором слов (20-30 слов, должны встречаться повторяющиеся):
+ 1. Создать массив с набором слов (20-30 слов, должны встречаться повторяющиеся):
     String[] words = {"apple", "banana", "orange", "pear", "kiwi", "peach", "plum", "apple", "banana", "grape",
     "watermelon", "orange", "pear", "strawberry", "cherry", "mango", "pineapple", "apple", "banana", "orange"};
     Найти список слов, из которых состоит массив (дубликаты не считать);
@@ -20,8 +17,8 @@ public class HomeWork {
      */
 
     public static void main(String[] args) {
-        taskTwo();
-//        taskOne();
+//        taskTwo();
+        taskOne();
     }
 
     private static void taskTwo() {
@@ -58,6 +55,15 @@ public class HomeWork {
 
         findAndPrintUniqueWordsInArray(words);
         hashMapCounterOccurs(words);
+
+        System.out.println("Ivan's solution");
+
+        System.out.println(getWords(words));
+
+    }
+
+    private static HashSet<String> getWords(String[] array){
+        return new HashSet<>(Arrays.asList(array));
     }
 
     private static void hashMapCounterOccurs(String[] array){
