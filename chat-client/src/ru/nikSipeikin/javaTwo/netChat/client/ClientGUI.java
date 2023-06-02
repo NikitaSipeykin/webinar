@@ -1,13 +1,17 @@
 package ru.nikSipeikin.javaTwo.netChat.client;
 
+import ru.nikSipeikin.javaTwo.network.SocketThread;
+import ru.nikSipeikin.javaTwo.network.SocketThreadListener;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.Socket;
 
-public class ClientGUI extends JFrame implements ActionListener, Thread.UncaughtExceptionHandler {
+public class ClientGUI extends JFrame implements ActionListener, Thread.UncaughtExceptionHandler, SocketThreadListener {
 /*
 ДЗ к уроку 4
 *  доработатть программу так, чтобы она могла отправлять сообщения в лог по нажатию кнопки  или по нажатию клавиши
@@ -35,6 +39,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
 
     private final JList<String> userList = new JList<>();
     private boolean shownIoErrors = false;
+    private SocketThread socketThread;
 
     public static void main(String[] args) {
 
@@ -75,7 +80,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         buttonSend.addActionListener(this);
         //Ivan realization
         textFieldMessage.addActionListener(this);
-
+        buttonLogin.addActionListener(this);
         //my realization
 //        textFieldMessage.addKeyListener(new KeyAdapter() {
 //            @Override
@@ -100,12 +105,26 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
             setAlwaysOnTop(checkBoxAlwaysOnTop.isSelected());
         } else if (src == buttonSend || src == textFieldMessage) {
             sendMessage();
+        } else if (src == buttonLogin) {
+            connect();
         } else{
             throw new RuntimeException("Unknown Source: " + src);
         }
     }
 
-    /** Message send methods **/
+    private void connect(){
+        try {
+            Socket socket = new Socket(textFieldIPAddress.getText(), Integer.parseInt(textFieldPort.getText()));
+            socketThread = new SocketThread(this, "Client", socket);
+        }catch (IOException e){
+            showException(Thread.currentThread(), e);
+        }
+    }
+
+    /**
+     *
+     * Message send methods
+     * */
 
     private void sendMessage(){
         String msg = textFieldMessage.getText();
@@ -113,8 +132,8 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         if("".equals(msg)) return;
         textFieldMessage.setText(null);
         textFieldMessage.grabFocus();
-        putLog(String.format("%s: %s", username, msg));
-        writeMsgToLogFile(msg, username);
+        socketThread.sendMessage(msg);
+//        writeMsgToLogFile(msg, username);
     }
 
     private void writeMsgToLogFile(String msg, String username) {
@@ -148,9 +167,11 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         log.append(msg + "\n");
     }
 
-    /** Message send methods **/
 
-    /** exception methods **/
+    /**
+     *
+     * exception methods
+     * */
 
     @Override
     public void uncaughtException(Thread t, Throwable e) {
@@ -173,5 +194,35 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         JOptionPane.showMessageDialog(null, msg, "Exception", JOptionPane.ERROR_MESSAGE);
     }
 
-    /** exception methods **/
+
+
+    /**
+     *
+     * Socket thread listener methods
+     */
+
+    @Override
+    public void onSocketStart(SocketThread thread, Socket socket) {
+        putLog("Start");
+    }
+
+    @Override
+    public void onSocketStop(SocketThread thread) {
+        putLog("Stop");
+    }
+
+    @Override
+    public void onSocketReady(SocketThread thread, Socket socket) {
+        putLog("Ready");
+    }
+
+    @Override
+    public void onReceiveString(SocketThread thread, Socket socket, String message) {
+        putLog(message);
+    }
+
+    @Override
+    public void onSocketException(SocketThread thread, Exception exception) {
+        showException(thread,exception);
+    }
 }
