@@ -10,10 +10,11 @@ public class SocketThread extends Thread {
 
     private final SocketThreadListener listener;
     private final Socket socket;
+    DataInputStream in;
     private DataOutputStream out;
 
     public SocketThread(SocketThreadListener listener, String name, Socket socket){
-        super((name));
+        super(name);
         this.socket = socket;
         this.listener = listener;
         start();
@@ -23,7 +24,7 @@ public class SocketThread extends Thread {
     public void run() {
         try {
             listener.onSocketStart(this, socket);
-            DataInputStream in = new DataInputStream(socket.getInputStream());
+            in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
             listener.onSocketReady(this, socket);
             while ((!interrupted())){
@@ -45,6 +46,7 @@ public class SocketThread extends Thread {
     public synchronized void close(){
         interrupt();
         try {
+            in.close();
             socket.close();
         }catch (IOException e ){
             listener.onSocketException(this, e);

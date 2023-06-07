@@ -1,5 +1,6 @@
 package ru.nikSipeikin.javaTwo.netChat.client;
 
+import ru.nikSipeikin.javaTwo.netChat.common.Library;
 import ru.nikSipeikin.javaTwo.network.SocketThread;
 import ru.nikSipeikin.javaTwo.network.SocketThreadListener;
 
@@ -20,7 +21,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
 *  Прочитать методичку к следующему уроку
 * */
 
-    private static final int WIDTH = 400;
+    private static final int WIDTH = 600;
     private static final int HEIGHT =300;
     private final JTextArea log = new JTextArea();
     private final JPanel panelTop = new JPanel(new GridLayout(2, 3));
@@ -59,6 +60,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         JScrollPane scrollUser = new JScrollPane(userList);
         scrollUser.setPreferredSize(new Dimension(150, 0));
         log.setEditable(false);
+        log.setLineWrap(true);
 
         String[] users = {"User1", "User2", "User3", "User4", "User5",
                 "User_with_an_exceptionally_long_name_in_this_chat"};
@@ -81,6 +83,8 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         //Ivan realization
         textFieldMessage.addActionListener(this);
         buttonLogin.addActionListener(this);
+        buttonDisconnect.addActionListener(this);
+        panelBottom.setVisible(false);
         //my realization
 //        textFieldMessage.addKeyListener(new KeyAdapter() {
 //            @Override
@@ -107,6 +111,8 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
             sendMessage();
         } else if (src == buttonLogin) {
             connect();
+        } else if (src == buttonDisconnect) {
+            socketThread.close();
         } else{
             throw new RuntimeException("Unknown Source: " + src);
         }
@@ -186,11 +192,10 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         if (stackTraceElements.length == 0)
             msg = "Empty Stacktrace";
         else {
-            msg = String.format("Exception in \"%s\" %s\n\tat $s", t.getName(), e.getClass().getCanonicalName(),
+            msg = String.format("Exception in \"%s\" %s   %s\n\tat %s \n ", t.getName(), e.getClass().getCanonicalName(),
                     e.getMessage(),stackTraceElements[0]);
             JOptionPane.showMessageDialog(this, msg, "Exception", JOptionPane.ERROR_MESSAGE);
         }
-
         JOptionPane.showMessageDialog(null, msg, "Exception", JOptionPane.ERROR_MESSAGE);
     }
 
@@ -208,12 +213,17 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
 
     @Override
     public void onSocketStop(SocketThread thread) {
-        putLog("Stop");
+        panelBottom.setVisible(false);
+        panelTop.setVisible(true);
     }
 
     @Override
     public void onSocketReady(SocketThread thread, Socket socket) {
-        putLog("Ready");
+        panelBottom.setVisible(true);
+        panelTop.setVisible(false);
+        String login = textFieldLogin.getText();
+        String password = new String(textFieldPassword.getPassword());
+        thread.sendMessage(Library.getAuthRequest(login, password));
     }
 
     @Override
