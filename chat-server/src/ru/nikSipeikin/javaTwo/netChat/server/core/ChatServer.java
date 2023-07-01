@@ -60,6 +60,9 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
     public void onServerStop(ServerSocketThread thread) {
         putLog("Server thread stopped");
         SQLClient.disconnect();
+        for (int i = 0; i < clients.size(); i++) {
+            clients.get(i).close();
+        }
     }
 
     @Override
@@ -81,6 +84,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
     public void onSocketAccepted(ServerSocketThread thread, ServerSocket server, Socket socket) {
         putLog("Client connected");
         String name = "SocketThread " + socket.getInetAddress() + ":" + socket.getPort();
+        System.out.println(name);
         new ClientThread(this, name, socket);
     }
 
@@ -93,12 +97,20 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
     @Override
     public synchronized void onSocketStop(SocketThread thread) {
         putLog("Socket stopped");
+        clients.remove(thread);
+        ClientThread clientThread = (ClientThread) thread;
+        if(clientThread.isAuthorized() && !clientThread.isReconnecting()){
+            sendToAllAuthorizedClients(Library.getTypeBroadcast("Server ",
+                    clientThread.getNickname() + " disconnected"));
+        }
+        sendToAllAuthorizedClients(Library.getUserList(getUsers()));
     }
 
     @Override
     public synchronized void onSocketReady(SocketThread thread, Socket socket) {
         putLog("Socket ready");
         clients.add(thread);
+        sendToAllAuthorizedClients(Library.getUserList(getUsers()));
     }
 
     @Override
@@ -127,13 +139,30 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
             putLog("Invalid login attempt: " + login);
             client.authFail();
             return;
+        }else {
+            ClientThread oldClient = findClientByNickname(nickname);
+            client.authAccept(nickname);
+            if (oldClient == null){
+                sendToAllAuthorizedClients(Library.getTypeBroadcast("Server ", nickname + " connected"));
+            }else {
+                oldClient.reconnect();
+                clients.remove(oldClient);
+            }
         }
-        client.authAccept(nickname);
-        sendToAllAuthorizedClients(Library.getTypeBroadcast("Server ", nickname + " connected"));
+        sendToAllAuthorizedClients(Library.getUserList(getUsers()));
     }
 
     private void handleAuthMessage(ClientThread client, String message){
-        sendToAllAuthorizedClients(Library.getTypeBroadcast(client.getNickname(), message));
+        String[] arr = message.split(Library.DELIMITER);
+        String messageType = arr[0];
+        switch (messageType){
+            case Library.TYPE_BROADCAST_CLIENT:
+                sendToAllAuthorizedClients(Library.getTypeBroadcast(client.getNickname(), arr[1]));
+                break;
+            default:
+                client.messageFormatError(message);
+        }
+
     }
 
     private void sendToAllAuthorizedClients(String message) {
@@ -142,6 +171,26 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
             if (!recipient.isAuthorized())continue;
             recipient.sendMessage(message);
         }
+    }
+
+    private String getUsers(){
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < clients.size(); i++) {
+            ClientThread clientThread = (ClientThread) clients.get(i);
+            if (!clientThread.isAuthorized()) continue;
+            stringBuilder.append(clientThread.getNickname()).append(Library.DELIMITER);
+        }
+        return  stringBuilder.toString();
+    }
+
+    private synchronized ClientThread findClientByNickname(String nickname){
+        for (int i = 0; i < clients.size(); i++) {
+            ClientThread clientThread = (ClientThread) clients.get(i);
+            if(!clientThread.isAuthorized()) continue;
+            if(clientThread.getNickname().equals(nickname))
+                return clientThread;
+        }
+        return null;
     }
 
     @Override

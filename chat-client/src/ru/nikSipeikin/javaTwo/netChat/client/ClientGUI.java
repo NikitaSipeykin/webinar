@@ -11,6 +11,9 @@ import java.awt.event.ActionListener;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.Socket;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
 
 public class ClientGUI extends JFrame implements ActionListener, Thread.UncaughtExceptionHandler, SocketThreadListener {
 /*
@@ -42,6 +45,9 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
     private boolean shownIoErrors = false;
     private SocketThread socketThread;
 
+    private final DateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss: ");
+    private final String WINDOW_TITLE = "Chat";
+
     public static void main(String[] args) {
 
         /**Лямбда выражение от ананимного класса реализущего интерфейс new Runnable() -> run()*/
@@ -62,9 +68,9 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         log.setEditable(false);
         log.setLineWrap(true);
 
-        String[] users = {"User1", "User2", "User3", "User4", "User5",
-                "User_with_an_exceptionally_long_name_in_this_chat"};
-        userList.setListData(users);
+//        String[] users = {"User1", "User2", "User3", "User4", "User5",
+//                "User_with_an_exceptionally_long_name_in_this_chat"};
+//        userList.setListData(users);
 
         checkBoxAlwaysOnTop.addActionListener(this);
 
@@ -134,11 +140,11 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
 
     private void sendMessage(){
         String msg = textFieldMessage.getText();
-        String username = textFieldLogin.getText();
+//        String username = textFieldLogin.getText();
         if("".equals(msg)) return;
         textFieldMessage.setText(null);
         textFieldMessage.grabFocus();
-        socketThread.sendMessage(msg);
+        socketThread.sendMessage(Library.getTypeBroadcastClient(msg));
 //        writeMsgToLogFile(msg, username);
     }
 
@@ -199,7 +205,33 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         JOptionPane.showMessageDialog(null, msg, "Exception", JOptionPane.ERROR_MESSAGE);
     }
 
-
+    private void handleMessage(String message){
+        String[] arr = message.split(Library.DELIMITER);
+        String messageType = arr[0];
+        switch (messageType){
+            case Library.AUTH_ACCEPT:
+                setTitle(WINDOW_TITLE + " entered with nickname: " + arr[1]);
+                break;
+            case Library.AUTH_DENIED:
+                putLog("Authorisation failed ");
+                break;
+            case Library.MSG_FORMAT_ERROR:
+                putLog(message);
+                socketThread.close();
+                break;
+            case Library.TYPE_BROADCAST:
+                putLog(DATE_FORMAT.format(Long.parseLong(arr[1])) + arr[2] + ": " + arr[3]);
+                break;
+            case Library.USER_LIST:
+                message = message.substring(Library.USER_LIST.length() + Library.DELIMITER.length());
+                String[] usersArray  = message.split(Library.DELIMITER);
+                Arrays.sort(usersArray);
+                userList.setListData(usersArray);
+                break;
+            default:
+                throw  new RuntimeException("Unknown message type: " + message);
+        }
+    }
 
     /**
      *
@@ -215,6 +247,8 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
     public void onSocketStop(SocketThread thread) {
         panelBottom.setVisible(false);
         panelTop.setVisible(true);
+        setTitle(WINDOW_TITLE);
+        userList.setListData(new String[0]);
     }
 
     @Override
@@ -228,7 +262,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
 
     @Override
     public void onReceiveString(SocketThread thread, Socket socket, String message) {
-        putLog(message);
+        handleMessage(message);
     }
 
     @Override
